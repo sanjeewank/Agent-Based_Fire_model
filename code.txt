@@ -1,0 +1,67 @@
+globals [fireplaces individualscount deadcount]
+
+breed [individuals individual]
+
+individuals-own[
+  homeplace
+  safehouse
+]
+
+
+to setup
+  clear-all
+  reset-ticks
+  import-pcolors "city.png"
+  set fireplaces n-of firespot patches with [pcolor = white]
+  set individualscount nb_individuals
+  set deadcount 0
+  create-individuals nb_individuals[
+    set homeplace one-of patches with [pcolor = black]
+    set safehouse one-of (patches with [pcolor = 7.4]) with-min [distance self]
+    set shape "person"
+    set color green
+    move-to homeplace
+  ]
+end
+
+to alert
+  ask fireplaces[set pcolor yellow]
+  ask individuals[
+    let target min-one-of patches with [pcolor = white] [distance myself]
+    face target
+    loop [
+      if pcolor = white [ stop ]
+      forward 1
+    ]
+  ]
+end
+
+to move
+  ask individuals[
+    let target min-one-of patches with [pcolor = 7.4] [distance myself]
+    face target
+    if pcolor != 7.4 [forward 0.5]
+    if pcolor = yellow [
+     set deadcount deadcount + 1
+     set individualscount individualscount - 1
+     die
+    ]
+  ]
+end
+
+to fire
+  ask fireplaces[
+    let fireneighbors patches with [pcolor = white or pcolor = black and distance myself = 1]
+    ask fireneighbors [set pcolor yellow]
+  ]
+  let num-yellow-patches count patches with [pcolor = yellow]
+  let random-num random num-yellow-patches
+  set fireplaces n-of random-num patches with [pcolor = yellow]
+end
+
+to go
+  move
+  fire
+  tick
+end
+
